@@ -2,7 +2,7 @@
     "name": "jasir/gitprompt",
     "description": "Fast git prompt",
     "require": {
-        "bramus/ansi-php": "~3.0"
+        "rxx/colors": "^1.0"
     },
     "authors": [
         {

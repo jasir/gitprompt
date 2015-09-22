@@ -1,94 +1,58 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/GitStatus.php';
 
-use \Bramus\Ansi\Ansi;
-use \Bramus\Ansi\ControlSequences\EscapeSequences\Enums\SGR;
+use RXX\Colors\Colors;
 
-// Create Ansi Instance
-$ansi = new Ansi();
-$ansi->text(' ');
+$ansi = new Colors();
 
-// Output some styled text on screen, along with a Line Feed and a Bell
-/*$ansi->color(array(SGR::COLOR_FG_WHITE, SGR::COLOR_BG_RED))
-	->text('I will be blinking red on a wite background.')
-     ->nostyle()
-     ->text(' And I will be normally styled.')
-     ->lf()
-     ->text('Ooh, a bell is coming ...')
-     ->bell();*/
+$printToStr = function ($msg) use ($ansi) {
+	return $ansi->cprint($msg, false, false, true);
+};
 
-$status = file_get_contents('php://stdin');
 
-$lines= explode("\n", trim($status));
-if (count($lines) === 0) {
-	$colors->error($ansi)->text('NO GIT');
+echo " ";
+
+$status = new GitStatus(file_get_contents('php://stdin'));
+
+if ($status->isGitRepository() === false) {
+	echo $printToStr("%yb;no git%x;");
 	exit();
 }
 
-$parsed = [];
-foreach ($lines as $line) {
-	$info = explode(' ', trim($line), 2);
-	$parsed[$info[0]]['lines'][] = $info[1];
-}
-
-$line = $lines[0];
-$regs = [];
-
-if (preg_match('%##\s(?P<branch>[a-z/]+)(...(?P<remoteBranch>[a-z/]+)){0,1}(\s\[(?P<ahead>[a-zA-Z0-9 ]+)\]){0,1}%i', $line, $regs)) {
-	;
+echo $printToStr("%G;({$status->getBranch()}%x;");
+if ($status->hasRemoteBranch()) {
+	echo $printToStr("%g;..{$status->getRemoteBranch()})%x;, %m;{$status->getAheadStatus()}%x;");
+} else {
+	echo ")";
 }
 
 
-$status = [
-	'deleted' => count($parsed['D']['lines']),
-	'deletedFiles' => count($parsed['D']['lines']) > 0 ? implode(', ', $parsed['D']['lines']) : [],
 
-	'added' => count($parsed['A']['lines']),
-	'addedFiles' => count($parsed['A']['lines']) > 0 ? implode(', ', $parsed['A']['lines']) : [],
+$counts = [];
 
-	'modified' => count($parsed['M']['lines']),
-	'modifiedFiles' => count($parsed['M']['lines']) > 0 ? implode(', ', $parsed['M']['lines']) : [],
-
-	'untracked' => count($parsed['??']['lines']),
-	'untrackedFiles' => count($parsed['??']['lines']) > 0 ? implode(', ', $parsed['??']['lines']) : [],
-
-	'branch' => $regs['branch'] ?? 'no branch',
-	'remoteBranch' => $regs['remoteBranch'] ?? 'no remote',
-	'ahead' => $regs['ahead'] ?? ''
-];
-
-
-
-
-$ansi->color([SGR::COLOR_BG_BLACK, SGR::COLOR_FG_GREEN])
-	->text("($status[branch])")
-	->reset();
-
-if ($status['ahead']) {
-	$ansi->text(' [')
-		->text($status['ahead'])
-		->text(']')
-		->reset();
+if ($status->getModifiedCount() > 0) {
+	$counts[] = $printToStr("%y;*{$status->getModifiedCount()}");
 }
 
-$ansi->text(' ');
-
-
-if ($status['modified'] > 0) {
-	$ansi->color([SGR::COLOR_BG_RESET, SGR::COLOR_FG_YELLOW])->text("*{$status[modified]}"); // ({$status[modifiedFiles]})");
+if ($status->getAddedCount() > 0) {
+	$counts[] = $printToStr("%g;+{$status->getAddedCount()}");
 }
 
-if ($status['added'] > 0) {
-	$ansi->color([SGR::COLOR_BG_RESET, SGR::COLOR_FG_GREEN])->text("+{$status[added]}");// ($status[addedFiles])");
+if ($status->getDeletedCount() > 0) {
+	$counts[] = $printToStr("%r;-{$status->getDeletedCount()}");
 }
 
-if ($status['deleted'] > 0) {
-	$ansi->color([SGR::COLOR_BG_RESET, SGR::COLOR_FG_RED])->text("-{$status[deleted]}");// ($status[deletedFiles])");
+if ($status->getUntrackedCount() > 0) {
+	$counts[] = $printToStr("%c;?{$status->getUntrackedCount()}");
+
 }
 
-if ($status['untracked'] > 0) {
-	$ansi->color([SGR::COLOR_BG_RESET, SGR::COLOR_FG_CYAN])->text("?{$status[untracked]}"); // ($status[untracked])");
+if (count($counts) > 0) {
+	echo  ' [' . implode(' ', $counts) .  $printToStr("%x;]");
 }
+
+
 
 
 //print_r($status);
