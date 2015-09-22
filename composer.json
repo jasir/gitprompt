@@ -1,0 +1,13 @@
+{
+    "name": "jasir/gitprompt",
+    "description": "Fast git prompt",
+    "require": {
+        "bramus/ansi-php": "~3.0"
+    },
+    "authors": [
+        {
+            "name": "jasir",
+            "email": "sirjarda2@gmail.com"
+        }
+    ]
+}
