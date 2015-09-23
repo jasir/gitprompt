@@ -10,13 +10,13 @@ $printToStr = function ($msg) use ($ansi) {
 	return $ansi->cprint($msg, false, false, true);
 };
 
-
 echo " ";
 
-$status = new GitStatus(file_get_contents('php://stdin'));
+$input = file_get_contents('php://stdin');
+$status = new GitStatus($input);
 
 if ($status->isGitRepository() === false) {
-	echo $printToStr("%yb;no git%x;");
+	echo $printToStr("%r;<no git> %x;");
 	exit();
 }
 
@@ -28,6 +28,13 @@ if ($status->hasRemoteBranch()) {
 }
 
 
+$totalChanges = $status->getTotalCount();
+
+if ($totalChanges > 0) {
+	echo $printToStr(", changed %Y;{$totalChanges}%x; files:");
+} else {
+	echo $printToStr(" %Wg; clean %x;");
+}
 
 $counts = [];
 
@@ -49,10 +56,5 @@ if ($status->getUntrackedCount() > 0) {
 }
 
 if (count($counts) > 0) {
-	echo  ' [' . implode(' ', $counts) .  $printToStr("%x;]");
+	echo ' [' . implode(' ', $counts) . $printToStr("%x;]");
 }
-
-
-
-
-//print_r($status);

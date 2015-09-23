@@ -17,11 +17,11 @@ class GitStatus
 
 	public function __construct($status)
 	{
-		$lines = explode("\n", trim($status));
-		if (count($lines) === 0) {
+		if (strlen($status) === 0) {
 			$this->isGitRepository = false;
 			return;
 		}
+		$lines = explode("\n", trim($status));
 		$this->parsed = [];
 		foreach ($lines as $line) {
 			$info = explode(' ', trim($line), 2);
@@ -37,7 +37,7 @@ class GitStatus
 
 		$this->branch = $regs['branch'] ?? 'no branch';
 		$this->remoteBranch = $regs['remoteBranch'] ?? false;
--		$this->ahead = $regs['ahead'] ?? '';
+		$this->ahead = $regs['ahead'] ?? '';
 	}
 
 
@@ -49,7 +49,16 @@ class GitStatus
 
 	public function isClean()
 	{
-		return $this->getDeletedCount() + $this->getAddedCount() + $this->getModifiedCount() + $this->getUntrackedCount() === 0;
+		return $this->getTotalCount() === 0;
+	}
+
+
+	/**
+	 * @return int
+	 */
+	public function getTotalCount()
+	{
+		return $this->getDeletedCount() + $this->getAddedCount() + $this->getModifiedCount() + $this->getUntrackedCount();
 	}
 
 
