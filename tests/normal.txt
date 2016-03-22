@@ -1,0 +1,8 @@
+## master
+ M composer.json
+ M composer.lock
+ M gitprompt.php
+R  GitStatus.php -> src/GitStatus.php
+AM tests/tests/GitStatusTest.php
+?? tests/initialized.txt
+?? tests/normal.txt

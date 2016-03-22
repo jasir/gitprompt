@@ -2,8 +2,6 @@
 
 class GitStatus
 {
-	private $status;
-
 	private $parsed;
 
 	private $isGitRepository = true;
@@ -17,7 +15,7 @@ class GitStatus
 
 	public function __construct($status)
 	{
-		if (strlen($status) === 0) {
+		if ($status === '') {
 			$this->isGitRepository = false;
 			return;
 		}
@@ -31,13 +29,13 @@ class GitStatus
 
 		$regs = [];
 		$line = $lines[0];
-		if (preg_match('%##\s(?P<branch>[a-z/]+)(...(?P<remoteBranch>[a-z/]+)){0,1}(\s\[(?P<ahead>[a-zA-Z0-9 ]+)\]){0,1}%i', $line, $regs)) {
-			;
+		if (preg_match('%## Initial commit on (?P<branch>[a-z/]+)%i', $line, $regs)) {
+			$this->branch = $regs['branch'] ?? 'no branch';
+		} elseif (preg_match('%##\s(?P<branch>[a-z/]+)(\.\.\.(?P<remoteBranch>[a-z/]+)){0,1}(\s\[(?P<ahead>[a-zA-Z0-9 ]+)\]){0,1}%i', $line, $regs)) {
+			$this->branch = $regs['branch'] ?? 'no branch';
+			$this->remoteBranch = $regs['remoteBranch'] ?? false;
+			$this->ahead = $regs['ahead'] ?? '';
 		}
-
-		$this->branch = $regs['branch'] ?? 'no branch';
-		$this->remoteBranch = $regs['remoteBranch'] ?? false;
-		$this->ahead = $regs['ahead'] ?? '';
 	}
 
 
@@ -58,7 +56,7 @@ class GitStatus
 	 */
 	public function getTotalCount()
 	{
-		return $this->getDeletedCount() + $this->getAddedCount() + $this->getModifiedCount() + $this->getUntrackedCount();
+		return $this->getDeletedCount() + $this->getAddedCount() + $this->getModifiedCount() + $this->getUntrackedCount() + $this->getRenamedCount();
 	}
 
 
@@ -67,30 +65,30 @@ class GitStatus
 		return $this->getCount('D');
 	}
 
-
 	private function getCount($type)
 	{
-		return count($this->parsed[$type]['lines']);
+		return count($this->parsed[$type]['lines'] ?? []);
 	}
-
 
 	public function getAddedCount()
 	{
 		return $this->getCount('A');
 	}
 
-
 	public function getModifiedCount()
 	{
 		return $this->getCount('M');
 	}
-
 
 	public function getUntrackedCount()
 	{
 		return $this->getCount('??');
 	}
 
+	public function getRenamedCount()
+	{
+		return $this->getCount('R');
+	}
 
 	public function getAheadStatus()
 	{
