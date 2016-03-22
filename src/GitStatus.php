@@ -12,6 +12,8 @@ class GitStatus
 
 	private $ahead;
 
+	private $gitDir;
+
 
 	public function __construct($status)
 	{
@@ -31,25 +33,48 @@ class GitStatus
 		$line = $lines[0];
 		if (preg_match('%## Initial commit on (?P<branch>[a-z/]+)%i', $line, $regs)) {
 			$this->branch = $regs['branch'] ?? 'no branch';
-		} elseif (preg_match('%##\s(?P<branch>[a-z/]+)(\.\.\.(?P<remoteBranch>[a-z/]+)){0,1}(\s\[(?P<ahead>[a-zA-Z0-9 ]+)\]){0,1}%i', $line, $regs)) {
+		} elseif (preg_match('%##\s(?P<branch>[a-z_\-/]+)(\.\.\.(?P<remoteBranch>[a-z_\-/]+)){0,1}(\s\[(?P<ahead>[a-zA-Z0-9 ]+)\]){0,1}%i', $line, $regs)) {
 			$this->branch = $regs['branch'] ?? 'no branch';
 			$this->remoteBranch = $regs['remoteBranch'] ?? false;
 			$this->ahead = $regs['ahead'] ?? '';
 		}
+		$this->gitDir = $this->determineGitDir(getcwd());
 	}
 
+
+	public function determineGitDir($fromDir)
+	{
+
+		if (!$this->isGitRepository()) {
+			return false;
+		}
+
+		$candidate = $fromDir;
+
+		while (!is_dir($candidate . '/.git')) {
+			$prev = $candidate;
+			$candidate = dirname($candidate, 1);
+			if ($candidate === $prev) {
+				$candidate = false;
+				break;
+			}
+		}
+
+		if ($candidate) {
+			return $candidate . '/.git';
+		}
+		return false;
+	}
 
 	public function isGitRepository()
 	{
 		return $this->isGitRepository;
 	}
 
-
 	public function isClean()
 	{
 		return $this->getTotalCount() === 0;
 	}
-
 
 	/**
 	 * @return int
@@ -58,7 +83,6 @@ class GitStatus
 	{
 		return $this->getDeletedCount() + $this->getAddedCount() + $this->getModifiedCount() + $this->getUntrackedCount() + $this->getRenamedCount();
 	}
-
 
 	public function getDeletedCount()
 	{
@@ -95,21 +119,26 @@ class GitStatus
 		return $this->ahead;
 	}
 
-
 	public function getBranch()
 	{
 		return $this->branch;
 	}
-
 
 	public function getRemoteBranch()
 	{
 		return $this->remoteBranch;
 	}
 
-
 	public function hasRemoteBranch()
 	{
 		return !empty($this->remoteBranch);
+	}
+
+	/**
+	 * @return bool|string
+	 */
+	public function getGitDir()
+	{
+		return $this->gitDir;
 	}
 }
