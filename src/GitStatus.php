@@ -31,12 +31,15 @@ class GitStatus
 
 		$regs = [];
 		$line = $lines[0];
-		if (preg_match('%## Initial commit on (?P<branch>[a-z0-9\/\-_]+)%i', $line, $regs)) {
+		if (preg_match('%## Initial commit on (?P<branch>[a-z0-9\/\-_\.]+)%i', $line, $regs)) {
 			$this->branch = $regs['branch'] ?? 'no branch';
-		} elseif (preg_match('%##\s(?P<branch>[a-z0-9\/\-_]+)(\.\.\.(?P<remoteBranch>[a-z_\-/]+)){0,1}(\s\[(?P<ahead>[a-zA-Z0-9 ]+)\]){0,1}%i', $line, $regs)) {
-			$this->branch = $regs['branch'] ?? 'no branch';
-			$this->remoteBranch = $regs['remoteBranch'] ?? false;
-			$this->ahead = $regs['ahead'] ?? '';
+		} else {
+			$line = str_replace('...', '~~~', $line);
+			if (preg_match('%##\s(?P<branch>[a-z0-9\/\-_\.]+)(\~\~\~(?P<remoteBranch>[0-9a-z_\-/\.]+)){0,1}(\s\[(?P<ahead>[a-zA-Z0-9 ]+)\]){0,1}%i', $line, $regs)) {
+				$this->branch = $regs['branch'] ?? 'no branch';
+				$this->remoteBranch = $regs['remoteBranch'] ?? false;
+				$this->ahead = $regs['ahead'] ?? '';
+			}
 		}
 		$this->gitDir = $this->determineGitDir(getcwd());
 	}
