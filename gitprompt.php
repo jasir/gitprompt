@@ -6,13 +6,14 @@ use RXX\Colors\Colors;
 
 $ansi = new Colors();
 
-$printToStr = function ($msg) use ($ansi) {
-	return $ansi::cprint($msg, false, false, true);
+$printToStr = function ($msg, $autoreset = false) use ($ansi) {
+	return $ansi::cprint($msg, false, $autoreset, true);
 };
 
 echo ' ';
 
 $input = file_get_contents('php://stdin');
+//echo $input;
 $status = new GitStatus($input);
 
 if ($status->isGitRepository() === false) {
@@ -20,19 +21,23 @@ if ($status->isGitRepository() === false) {
 	exit();
 }
 
-echo $printToStr("%G;({$status->getBranch()}%x;");
+echo $printToStr("%B;({$status->getBranch()}");
+
+/** Remote branch develop..develop, ahead 1*/
+
 if ($status->hasRemoteBranch()) {
-	echo $printToStr("%g;..{$status->getRemoteBranch()})%x;");
+	echo $printToStr("%b;..{$status->getRemoteBranch()})");
 	$ahead = $status->getAheadStatus();
 	if (!empty($ahead)) {
 		$color = Colors::color(Colors::MAGENTA, true);
-		echo $printToStr(", {$color}{$status->getAheadStatus()}%x;");
+		echo $printToStr(", {$color}{$status->getAheadStatus()}");
 	}
 
 } else {
-	echo ')';
+	echo $printToStr(')%x;');
 }
 
+/** Changes  */
 
 $totalChanges = $status->getTotalCount();
 
@@ -64,4 +69,11 @@ if ($status->getUntrackedCount() > 0) {
 
 if (count($counts) > 0) {
 	echo ' [' . implode(' ', $counts) . $printToStr('%x;]');
+	//echo $printToStr("%R;hello%r;", true);
 }
+
+if ($status->isInRebase()) {
+	echo $printToStr(" %Wr; REBASE {$status->getRebaseStep()}/{$status->getRebaseSteps()} %G; {$status->getCurrentRebaseHead()} on %b'{$status->getCurrentRebaseMessage()}'", true);
+}
+
+

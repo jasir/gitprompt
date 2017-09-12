@@ -29,12 +29,28 @@ EOF
 
 	}
 
+
+	public function test_upstreamGone()
+	{
+		$status = new GitStatus(<<<EOF
+On branch feature/sklad
+Your branch is based on 'origin/feature/sklad', but the upstream is gone.
+nothing to commit, working tree clean
+EOF
+		);
+		static::assertEquals(null, $status->getRemoteBranch());
+	}
+
+
 	public function test_determineGitDir()
 	{
 		$status = $this->createExampleGitStatus();
-		static::assertEquals('c:\work\projects\gitprompt/.git', strtolower($status->determineGitDir(getcwd())));
+		static::assertEquals(
+			'c:\work\projects\bashsettings\gitprompt/.git',
+			strtolower($status->determineGitDir(getcwd())));
 		static::assertFalse($status->determineGitDir('c:/'));
 	}
+
 
 	/**
 	 * @return GitStatus
